@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Snakepage</title>
+    <link id='theme' rel="stylesheet" href="lightstyle.css" />
+  </head>
+  <body onload="loadSnake()" id='body'>
+    <div id="fb-root"></div>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v10.0&appId=2759640664366190&autoLogAppEvents=1" nonce="RB4XJdsT"></script>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+    </div>
+    <button id='restartbutton' onClick='restartGame()'>Restart game</button>
+    <button id='toggle'>Toggle theme</button>
+    <div id='mapwrapper'>
+      <h1>Buy a snake here!</h1>
+      <iframe height="500" width="300" marginwidth="0" marginheight="0" async src="https://www.mapquest.com/embed/us/north-carolina/burlington/27215-6318/1704-s-mebane-st-36.076912,-79.451363?center=36.07690418356219,-79.45140838623047&zoom=15&maptype=map"></iframe>
+    </div>
+    <div id='twitterwrapper'>
+      <h1>Look at snakes here!</h1>
+      <a class="twitter-timeline" data-lang="en" data-width="300" data-height="500" href="https://twitter.com/EverySnek?ref_src=twsrc%5Etfw">Tweets by EverySnek</a>
+      <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    </div>
+    <div id='facebookwrapper'>
+      <h1>Talk about snakes here!</h1>
+      <div class="fb-page" data-href="https://www.facebook.com/serpentes" data-tabs="timeline" data-width="" data-height="70" data-small-header="true" data-adapt-container-width="true" data-hide-cover="true" data-show-facepile="false">
+        <blockquote cite="https://www.facebook.com/serpentes" class="fb-xfbml-parse-ignore">
+          <a href="https://www.facebook.com/serpentes">Snakes</a>
+        </blockquote>
+      </div>
+    </div>
+  </body>
+  <script src='./toggle.js'></script>
+  <script>
+    function restartGame() {
+      document.getElementById('score').innerHTML = 'Score: 0';
+      loadSnake()
+    }
+
+    function loadSnake() {
+      const border = 'black';
+      const background = "white";
+      const color = 'green';
+      const gamecanvas = document.getElementById("gamecanvas");
+      const context = gamecanvas.getContext("2d");
+
+      let snake = [{x: 100, y: 20}, {x: 80, y: 20}, {x: 60, y: 20}, {x: 40, y: 20}, {x: 20, y: 20}] // initial snake position
+      let score = 0;
+      let changingdir = false;
+      let foodx; // food pos
+      let foody;
+      let xspeed = 20;
+      let yspeed = 0;
+      newfood();
+      document.addEventListener("keydown", turn);
+      //runs through setInterval in main
+      main();
+    
+      function main() {
+        const interval = setInterval(function () {
+          if(gameEnded()) {
+            document.getElementById('score').innerHTML = 'Game over! Score: ' + score;
+            clearInterval(interval); // stop game
+            return;
+          } 
+          changingdir = false;
+          context.fillStyle = background; //clear canvas
+          context.strokestyle = border;
+          context.fillRect(0, 0, gamecanvas.width, gamecanvas.height);
+          context.strokeRect(0, 0, gamecanvas.width, gamecanvas.height);
+
+          context.fillStyle = 'red'; // draw food
+          context.fillRect(foodx, foody, 20, 20);
+
+          moveSnake();
+        }, 100)
+      }
+
+      function newfood() {
+        foodx = Math.round((Math.random() * (gamecanvas.width - 20 - 0) + 0) / 20) * 20;
+        foody = Math.round((Math.random() * (gamecanvas.height - 20 - 0) + 0) / 20) * 20;
+        for(let i = 0; i < snake.length; i++) //prevent food being placed on snake
+          if(foodx == snake[i].x && foody == snake[i].y) {
+            newfood();
+            break;
+          }
+      }
+
+      function moveSnake() {
+        const head = snake[0];
+        const newhead = {x: head.x + xspeed, y: head.y + yspeed}; //in pos of next step
+        snake.splice(0, 0, newhead); // add new head
+        if(head.x == foodx && head.y == foody) { //ate food, don't pop tail
+          score += 100;
+          document.getElementById('score').innerHTML = 'Score: ' + score;
+          newfood();
+        } else
+          snake.pop(); //pop old tail
+        context.fillStyle = color; // draw new snake
+        snake.forEach(part => context.fillRect(part.x, part.y, 20, 20));
+      }
+
+      function gameEnded() { // return true if snake has hit something
+        for(let i = 1; i < snake.length; i++)
+          if(snake[0].x == snake[i].x && snake[0].y == snake[i].y) //head runs into body
+            return true
+        //head runs in to wall
+        return snake[0].x < 0 || snake[0].x >= gamecanvas.width || snake[0].y < 0 || snake[0].y >= gamecanvas.height
+      }
+
+      function turn(e) {
+        //prevent mutiple direction changes in 1 step
+        if(changingdir) 
+          return;
+        changingdir = true;
+        //move
+        switch(e.key) {
+          case "ArrowRight": // right
+          if(xspeed == -20) //no 180's
+            break;
+          xspeed = 20;
+          yspeed = 0;
+          break;
+
+          case "ArrowLeft": // left
+          if(xspeed == 20)
+            break;
+          xspeed = -20;
+          yspeed = 0;
+          break;
+
+          case "ArrowDown": // down
+          if(yspeed == -20)
+            break;
+          xspeed = 0;
+          yspeed = 20;
+          break;
+
+          case "ArrowUp": // up
+          if(yspeed == 20)
+            break;
+          xspeed = 0;
+          yspeed = -20;
+          break;
+        }
+      }
+    }
+    
+  </script>
+</html>
